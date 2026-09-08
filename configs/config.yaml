@@ -1,0 +1,26 @@
+# PhysioRANO Main Hydra Configuration
+defaults:
+  - _self_
+  - dataset: brats
+  - training: default
+
+project:
+  name: PhysioRANO
+  version: "0.3.0"
+  seed: 42
+  debug: false
+
+paths:
+  root_dir: ${hydra:runtime.cwd}
+  data_dir: ${paths.root_dir}/data
+  output_dir: ${paths.root_dir}/outputs
+  log_dir: ${paths.output_dir}/logs
+  checkpoint_dir: ${paths.output_dir}/checkpoints
+  report_dir: ${paths.output_dir}/reports
+
+hydra:
+  run:
+    dir: ${paths.output_dir}/runs/${now:%Y-%m-%d}_${now:%H-%M-%S}
+  sweep:
+    dir: ${paths.output_dir}/sweeps/${now:%Y-%m-%d}_${now:%H-%M-%S}
+    subdir: ${hydra.job.num}

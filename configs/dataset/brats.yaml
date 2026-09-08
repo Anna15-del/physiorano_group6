@@ -1,0 +1,31 @@
+# BraTS 2024 GLI Dataset Configuration
+name: brats2024_gli
+repo_id: "Aff77/BraTS-2024-Complete"
+subfolder: "BraTS-GLI"
+
+# Download settings
+download:
+  auto_download: true
+  cache_dir: ${paths.data_dir}/brats2024_gli
+
+# DataLoader specifications
+loader:
+  batch_size: 2
+  num_workers: 4
+  shuffle: true
+  pin_memory: true
+
+# Required file patterns per patient directory
+modalities:
+  t1n: "t1n.nii.gz"
+  t1c: "t1c.nii.gz"
+  t2w: "t2w.nii.gz"
+  t2f: "t2f.nii.gz"
+  seg: "seg.nii.gz"
+
+# Phase 2 Spatial & Preprocessing specifications
+preprocessing:
+  spatial_size: [128, 128, 128]
+  pixdim: [1.0, 1.0, 1.0]
+  crop_foreground: true
+  normalize_intensity: true

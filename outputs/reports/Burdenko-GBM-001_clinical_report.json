@@ -1,0 +1,37 @@
+{
+  "patient_id": "Burdenko-GBM-001",
+  "demographics": {
+    "Age": 51.0,
+    "Sex": "Female",
+    "IDH": "negative",
+    "MGMT": "negative"
+  },
+  "volumetrics": {
+    "Enhancing Tumor (ET)": {
+      "volume_cm3": 18.5
+    }
+  },
+  "pinn_biophysical_modeling": {
+    "pinn_diffusion_D": 0.9759505391120911,
+    "pinn_proliferation_rho": 0.7360756397247314,
+    "pinn_pde_residual": 0.11056853085756302
+  },
+  "recurrence_classification": {
+    "predicted_class": 0,
+    "predicted_label": "Response / Stable",
+    "probabilities": {
+      "Response / Stable": 0.8142070243757479,
+      "True Progression": 0.12367330742021349,
+      "Pseudoprogression": 0.06211966820403858
+    },
+    "pseudoprogression_risk_percent": 6.211966820403858
+  },
+  "rano2_evaluation": {
+    "rano_category": "PD",
+    "rano_category_name": "Progressive Disease (PD)",
+    "enhancing_tumor_change_pct": 54.166666666666664,
+    "whole_tumor_change_pct": 26.666666666666668,
+    "pseudoprogression_flag": false,
+    "clinical_guidance": "Significant volumetric expansion (>= 25%) or new lesion indicative of true tumor progression."
+  }
+}

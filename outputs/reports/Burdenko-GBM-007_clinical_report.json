@@ -1,0 +1,27 @@
+{
+  "patient_id": "Burdenko-GBM-007",
+  "demographics": {
+    "Age": 40,
+    "Sex": "F",
+    "IDH": "Positive",
+    "MGMT": "Positive"
+  },
+  "volumetrics": {
+    "Whole Tumor (WT)": {
+      "volume_cm3": 24.5
+    }
+  },
+  "pinn_biophysical_modeling": {
+    "pinn_diffusion_D": 0.12,
+    "pinn_proliferation_rho": 0.04,
+    "pinn_pde_residual": 0.002
+  },
+  "recurrence_classification": {
+    "predicted_label": "Pseudoprogression",
+    "pseudoprogression_risk_percent": 78.4
+  },
+  "rano2_evaluation": {
+    "rano_category_name": "Pseudoprogression (PsP)",
+    "clinical_guidance": "Re-evaluate scan in 4-8 weeks."
+  }
+}

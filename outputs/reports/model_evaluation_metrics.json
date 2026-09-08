@@ -1,0 +1,110 @@
+{
+  "recurrence_classifier": {
+    "holdout": {
+      "train_accuracy": 1.0,
+      "test_accuracy": 0.4444444444444444,
+      "overfitting_gap": 0.5555555555555556,
+      "precision_macro": 0.3888888888888889,
+      "recall_macro": 0.3825863678804855,
+      "f1_macro": 0.38297738297738304,
+      "f1_weighted": 0.43668493668493663,
+      "roc_auc_ovr": 0.6049108113703235,
+      "confusion_matrix": [
+        [
+          5,
+          6,
+          1
+        ],
+        [
+          3,
+          10,
+          4
+        ],
+        [
+          2,
+          4,
+          1
+        ]
+      ]
+    },
+    "cross_validation_5fold": {
+      "mean_train_accuracy": 0.9111111111111111,
+      "mean_val_accuracy": 0.5055555555555556,
+      "mean_val_f1_macro": 0.43346004257817505,
+      "overfitting_gap": 0.40555555555555545,
+      "confusion_matrix": [
+        [
+          29,
+          27,
+          4
+        ],
+        [
+          25,
+          55,
+          7
+        ],
+        [
+          4,
+          22,
+          7
+        ]
+      ],
+      "classification_report": {
+        "Response / Stable": {
+          "precision": 0.5,
+          "recall": 0.48333333333333334,
+          "f1-score": 0.4915254237288136,
+          "support": 60.0
+        },
+        "True Progression": {
+          "precision": 0.5288461538461539,
+          "recall": 0.632183908045977,
+          "f1-score": 0.5759162303664922,
+          "support": 87.0
+        },
+        "Pseudoprogression": {
+          "precision": 0.3888888888888889,
+          "recall": 0.21212121212121213,
+          "f1-score": 0.27450980392156865,
+          "support": 33.0
+        },
+        "accuracy": 0.5055555555555555,
+        "macro avg": {
+          "precision": 0.47257834757834755,
+          "recall": 0.4425461511668409,
+          "f1-score": 0.4473171526722915,
+          "support": 180.0
+        },
+        "weighted avg": {
+          "precision": 0.4935719373219373,
+          "recall": 0.5055555555555555,
+          "f1-score": 0.49252811663903007,
+          "support": 180.0
+        }
+      }
+    }
+  },
+  "segresnet_segmentation": {
+    "checkpoint_exists": false,
+    "segmentation_regions": {
+      "Whole Tumor (WT)": {
+        "voxels": 184597.0,
+        "volume_cm3": 184.597
+      },
+      "Tumor Core (TC)": {
+        "voxels": 116210.0,
+        "volume_cm3": 116.21000000000001
+      },
+      "Enhancing Tumor (ET)": {
+        "voxels": 116210.0,
+        "volume_cm3": 116.21000000000001
+      }
+    },
+    "device": "cpu"
+  },
+  "pinn_biophysical": {
+    "pinn_diffusion_D": 0.9896640181541443,
+    "pinn_proliferation_rho": 0.5547949075698853,
+    "pinn_pde_residual": 0.08231007307767868
+  }
+}

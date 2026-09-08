@@ -1,0 +1,17 @@
+# Burdenko-GBM-Progression Longitudinal Dataset Configuration (Template)
+name: burdenko_gbm_progression
+data_dir: ${paths.data_dir}/burdenko_gbm
+
+# DataLoader specifications
+loader:
+  batch_size: 1
+  num_workers: 2
+  shuffle: false
+
+# Longitudinal parameters (Placeholder for future longitudinal pipeline)
+longitudinal:
+  min_timepoints: 2
+  modalities:
+    - t1c
+    - t2f
+    - seg
