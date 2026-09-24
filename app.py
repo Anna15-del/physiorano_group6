@@ -13,12 +13,14 @@ Usage:
     streamlit run app.py
 """
 
+import base64
 import json
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import pandas as pd
+from PIL import Image
 import streamlit as st
 
 from datasets import find_brats_samples, load_burdenko_clinical_df
@@ -34,13 +36,39 @@ from classifier.rano_engine import evaluate_rano2_response
 from reporting.clinical_reporter import generate_patient_clinical_report
 from generative.tumor_forecast_gan import predict_future_mri_scan
 
+# Logo & Icon Asset Paths
+ASSETS_DIR = Path(__file__).parent.resolve() / "assets"
+LOGO_PATH = ASSETS_DIR / "logo.png"
+ICON_PATH = ASSETS_DIR / "icon.png"
+
+# Select best favicon
+page_icon_obj = "🧠"
+if ICON_PATH.exists():
+    try:
+        page_icon_obj = Image.open(ICON_PATH)
+    except Exception:
+        page_icon_obj = "🧠"
+elif LOGO_PATH.exists():
+    try:
+        page_icon_obj = Image.open(LOGO_PATH)
+    except Exception:
+        page_icon_obj = "🧠"
+
 # Streamlit Page Config
 st.set_page_config(
     page_title="PhysioRANO - Neuro-Oncology Framework",
-    page_icon="🧠",
+    page_icon=page_icon_obj,
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+
+def get_base64_image(image_path: Path) -> str:
+    """Encodes an image to a base64 string for seamless inline HTML rendering."""
+    if not image_path.exists():
+        return ""
+    with open(image_path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
 
 
 @st.cache_resource
@@ -114,6 +142,47 @@ def apply_custom_css():
             font-weight: 400;
         }
 
+        /* Hero Logo Badge */
+        .hero-logo-badge {
+            background: rgba(255, 255, 255, 0.96);
+            padding: 8px 16px;
+            border-radius: 14px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 200px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .hero-logo-badge:hover {
+            transform: scale(1.03);
+            box-shadow: 0 10px 25px rgba(56, 189, 248, 0.3);
+        }
+
+        .hero-logo-img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Sidebar Logo Card */
+        .sidebar-logo-card {
+            background: rgba(255, 255, 255, 0.96);
+            padding: 10px 14px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+            margin-bottom: 1.25rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.2s ease;
+        }
+
+        .sidebar-logo-card:hover {
+            transform: scale(1.02);
+        }
+
         /* Glassmorphism Metric Cards */
         [data-testid="stMetricValue"] {
             font-size: 1.8rem !important;
@@ -176,23 +245,54 @@ def apply_custom_css():
 def main():
     apply_custom_css()
 
-    st.markdown(
-        """
-        <div class="hero-banner">
-            <div class="hero-title">🧠 PhysioRANO Neuro-Oncology Framework</div>
-            <div class="hero-subtitle">Physiological & Physics-Informed 3D Multi-Modal Tumor Segmentation, Biophysical PINN, XGBoost Recurrence Classifier & RANO 2.0 Engine</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     root_dir = Path(__file__).parent.resolve()
     data_dir = root_dir / "data" / "brats2024_gli"
     checkpoint_path = root_dir / "outputs" / "checkpoints" / "best_model.pth"
     report_dir = root_dir / "outputs" / "reports"
 
-    # Sidebar Navigation
-    st.sidebar.markdown("<h2 style='color:#38bdf8;'>🧠 Navigation</h2>", unsafe_allow_html=True)
+    # Official Streamlit Logo
+    if LOGO_PATH.exists():
+        try:
+            st.logo(str(LOGO_PATH), icon_image=str(ICON_PATH) if ICON_PATH.exists() else None)
+        except Exception:
+            pass
+
+    # Top Hero Banner with Integrated Logo Badge
+    b64_logo = get_base64_image(LOGO_PATH)
+    if b64_logo:
+        logo_html = f"""
+        <div class="hero-logo-badge">
+            <img src="data:image/png;base64,{b64_logo}" class="hero-logo-img" alt="PhysioRANO Logo" />
+        </div>
+        """
+    else:
+        logo_html = ""
+
+    st.markdown(
+        f"""
+        <div class="hero-banner" style="display: flex; align-items: center; gap: 1.8rem; flex-wrap: wrap;">
+            {logo_html}
+            <div style="flex: 1; min-width: 280px;">
+                <div class="hero-title">PhysioRANO Neuro-Oncology Framework</div>
+                <div class="hero-subtitle">Physiological &amp; Physics-Informed 3D Multi-Modal Tumor Segmentation, Biophysical PINN, XGBoost Recurrence Classifier &amp; RANO 2.0 Engine</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Sidebar Navigation & Logo Card
+    if LOGO_PATH.exists() and b64_logo:
+        st.sidebar.markdown(
+            f"""
+            <div class="sidebar-logo-card">
+                <img src="data:image/png;base64,{b64_logo}" style="width: 100%; max-width: 200px; height: auto; display: block; margin: 0 auto;" alt="PhysioRANO Logo" />
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.sidebar.markdown("<h2 style='color:#38bdf8; margin-top:0;'>🧠 Navigation</h2>", unsafe_allow_html=True)
     menu = st.sidebar.radio(
         "Select Pipeline Stage:",
         [
@@ -210,6 +310,18 @@ def main():
     # ---------------------------------------------------------
     if menu == "🏠 Overview & System Architecture":
         st.header("Project Foundation & System Architecture")
+
+        st.markdown(
+            """
+            <div style="background: rgba(30, 41, 59, 0.6); border-left: 4px solid #38bdf8; padding: 1rem 1.4rem; border-radius: 10px; margin-bottom: 1.5rem; border: 1px solid rgba(255, 255, 255, 0.08);">
+                <span style="color: #38bdf8; font-weight: 700; font-size: 1.1rem;">🧠 PhysioRANO Platform Identity</span><br/>
+                <span style="color: #cbd5e1; font-size: 0.95rem;">
+                    Integrates 3D multi-parametric MRI segmentation (SegResNet), biophysical Fisher-Kolmogorov reaction-diffusion PINNs, longitudinal 3D generative forecasting (cGAN), and interpretable clinical decision support (RANO 2.0 &amp; SHAP).
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Hydra Configs", "Active", "v0.3.0")

@@ -227,8 +227,34 @@ def generate_patient_clinical_report(
                 textColor=colors.HexColor("#334155"),
             )
 
-            # Document Title Header
-            story.append(Paragraph("PhysioRANO NEURO-ONCOLOGY RADIOLOGY REPORT", title_style))
+            # Document Title Header (with Logo if available)
+            logo_path = Path(__file__).parent.parent.resolve() / "assets" / "logo.png"
+            if logo_path.exists():
+                header_table = Table(
+                    [
+                        [
+                            RLImage(str(logo_path), width=110, height=60),
+                            Paragraph("PhysioRANO NEURO-ONCOLOGY RADIOLOGY REPORT", title_style),
+                        ]
+                    ],
+                    colWidths=[120, 400],
+                )
+                header_table.setStyle(
+                    TableStyle(
+                        [
+                            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                            ("ALIGN", (0, 0), (0, 0), "LEFT"),
+                            ("ALIGN", (1, 0), (1, 0), "LEFT"),
+                            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                            ("TOPPADDING", (0, 0), (-1, -1), 0),
+                            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                        ]
+                    )
+                )
+                story.append(header_table)
+            else:
+                story.append(Paragraph("PhysioRANO NEURO-ONCOLOGY RADIOLOGY REPORT", title_style))
             story.append(Spacer(1, 4))
 
             # Embed Top MRI Slice Panel (A & B)
