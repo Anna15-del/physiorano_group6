@@ -101,6 +101,25 @@ def get_cached_burdenko_data():
     return df
 
 
+@st.cache_resource
+def get_cached_recurrence_classifier():
+    """Loads and caches the trained multimodal recurrence classifier."""
+    checkpoint_path = Path(__file__).parent.resolve() / "outputs" / "checkpoints" / "recurrence_classifier.pkl"
+    clf = MultimodalRecurrenceClassifier()
+    if checkpoint_path.exists():
+        import pickle
+        try:
+            with open(checkpoint_path, "rb") as f:
+                data = pickle.load(f)
+                clf.model = data["model"]
+                clf.is_fitted = data["is_fitted"]
+                return clf
+        except Exception:
+            pass
+    clf, _ = train_and_evaluate_classifier()
+    return clf
+
+
 def apply_custom_css():
     """Injects modern dark glassmorphism CSS design system into Streamlit."""
     st.markdown(
@@ -453,8 +472,8 @@ def main():
                     # Fit PINN
                     pinn_stats = fit_patient_biophysical_pinn(time_days=float(patient_row["days_rt_end_to_fup1"]), vol_cm3=15.0)
 
-                    # Fit Recurrence Classifier & Evaluate Overfitting via 5-Fold CV
-                    clf, eval_metrics = train_and_evaluate_classifier()
+                    # Predict Recurrence with Trained Classifier
+                    clf = get_cached_recurrence_classifier()
                     patient_dict = patient_row.to_dict()
                     patient_dict.update(pinn_stats)
                     result = clf.predict_single_patient(patient_dict)
@@ -470,18 +489,6 @@ def main():
 
                 st.subheader("Class Probabilities Breakdown")
                 st.json(result["probabilities"])
-
-                st.subheader("🛡️ Model Overfitting & 5-Fold Cross-Validation Metrics")
-                m1, m2, m3, m4 = st.columns(4)
-                m1.metric("Train Accuracy", f"{eval_metrics['train_accuracy_pct']:.1f}%")
-                m2.metric("5-Fold Val Accuracy", f"{eval_metrics['val_accuracy_mean_pct']:.1f}% ± {eval_metrics['val_accuracy_std_pct']:.1f}%")
-                m3.metric("Overfitting Gap", f"{eval_metrics['overfitting_gap_pct']:.1f}%")
-                m4.metric("Status", eval_metrics['overfitting_status'])
-
-                if eval_metrics['is_overfitting']:
-                    st.warning(f"⚠️ Overfitting warning: Train Accuracy ({eval_metrics['train_accuracy_pct']:.1f}%) exceeds 5-Fold Validation Accuracy ({eval_metrics['val_accuracy_mean_pct']:.1f}%). Regularization recommended.")
-                else:
-                    st.success(f"✅ Well-generalized model: 5-Fold Cross-Validation Accuracy is {eval_metrics['val_accuracy_mean_pct']:.1f}% with low overfitting gap ({eval_metrics['overfitting_gap_pct']:.1f}%).")
 
             # ---------------------------------------------------------
             # 3D CONDITIONAL GAN (cGAN) TUMOR GROWTH & REGRESSION FORECASTER
