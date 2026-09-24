@@ -270,12 +270,8 @@ def main():
 
     st.markdown(
         f"""
-        <div class="hero-banner" style="display: flex; align-items: center; gap: 1.8rem; flex-wrap: wrap;">
+        <div class="hero-banner" style="display: flex; align-items: center; justify-content: center; gap: 1.8rem; flex-wrap: wrap;">
             {logo_html}
-            <div style="flex: 1; min-width: 280px;">
-                <div class="hero-title">PhysioRANO Neuro-Oncology Framework</div>
-                <div class="hero-subtitle">Physiological &amp; Physics-Informed 3D Multi-Modal Tumor Segmentation, Biophysical PINN, XGBoost Recurrence Classifier &amp; RANO 2.0 Engine</div>
-            </div>
         </div>
         """,
         unsafe_allow_html=True,

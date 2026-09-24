@@ -11,11 +11,69 @@
     "whole_tumor_volume_cm3": 24.5,
     "tumor_core_volume_cm3": 12.2,
     "enhancing_tumor_volume_cm3": 18.5,
-    "tissue_diffusion_rate_mm2_per_day": 1.0589431524276733,
-    "cell_proliferation_rate_per_day": 0.7310616970062256,
+    "tissue_diffusion_rate_mm2_per_day": 1.0288128852844238,
+    "cell_proliferation_rate_per_day": 0.7328901886940002,
     "pseudoprogression_probability_pct": 9.920525826835226,
     "volumetric_change_pct": 54.166666666666664,
-    "rano2_category": "Progressive Disease (PD)"
+    "rano2_category": "Progressive Disease (PD)",
+    "cgan_forecast": {
+      "delta_t_days": 90.0,
+      "clinical_scenario": "Standard (Slow Growth / PsP)",
+      "forecasted_volumes": {
+        "Whole Tumor (WT)": {
+          "volume_cm3": 422.38
+        },
+        "Tumor Core (TC)": {
+          "volume_cm3": 395.01
+        },
+        "Enhancing Tumor (ET)": {
+          "volume_cm3": 232.22
+        }
+      },
+      "volume_changes_pct": {
+        "Whole Tumor (WT)": 105.5,
+        "Tumor Core (TC)": 105.5,
+        "Enhancing Tumor (ET)": 105.5
+      },
+      "trajectory": [
+        {
+          "days": 0,
+          "wt_vol_cm3": 205.59,
+          "tc_vol_cm3": 192.27,
+          "et_vol_cm3": 113.03
+        },
+        {
+          "days": 30,
+          "wt_vol_cm3": 277.85,
+          "tc_vol_cm3": 259.85,
+          "et_vol_cm3": 152.76
+        },
+        {
+          "days": 60,
+          "wt_vol_cm3": 350.11,
+          "tc_vol_cm3": 327.43,
+          "et_vol_cm3": 192.49
+        },
+        {
+          "days": 90,
+          "wt_vol_cm3": 422.38,
+          "tc_vol_cm3": 395.01,
+          "et_vol_cm3": 232.22
+        },
+        {
+          "days": 120,
+          "wt_vol_cm3": 494.64,
+          "tc_vol_cm3": 462.6,
+          "et_vol_cm3": 271.95
+        },
+        {
+          "days": 180,
+          "wt_vol_cm3": 616.76,
+          "tc_vol_cm3": 576.8,
+          "et_vol_cm3": 339.08
+        }
+      ]
+    }
   },
   "recurrence_classification": {
     "predicted_class": 1,
