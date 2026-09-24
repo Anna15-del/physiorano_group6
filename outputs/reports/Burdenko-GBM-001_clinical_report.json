@@ -4,27 +4,28 @@
     "Age": 51.0,
     "Sex": "Female",
     "IDH": "negative",
-    "MGMT": "negative"
+    "MGMT": "negative",
+    "days_rt_end_to_fup1": 11.0
   },
-  "volumetrics": {
-    "Enhancing Tumor (ET)": {
-      "volume_cm3": 18.5
-    }
-  },
-  "pinn_biophysical_modeling": {
-    "pinn_diffusion_D": 0.9759505391120911,
-    "pinn_proliferation_rho": 0.7360756397247314,
-    "pinn_pde_residual": 0.11056853085756302
+  "descriptive_findings": {
+    "whole_tumor_volume_cm3": 24.5,
+    "tumor_core_volume_cm3": 12.2,
+    "enhancing_tumor_volume_cm3": 18.5,
+    "tissue_diffusion_rate_mm2_per_day": 1.0589431524276733,
+    "cell_proliferation_rate_per_day": 0.7310616970062256,
+    "pseudoprogression_probability_pct": 9.920525826835226,
+    "volumetric_change_pct": 54.166666666666664,
+    "rano2_category": "Progressive Disease (PD)"
   },
   "recurrence_classification": {
-    "predicted_class": 0,
-    "predicted_label": "Response / Stable",
+    "predicted_class": 1,
+    "predicted_label": "True Progression",
     "probabilities": {
-      "Response / Stable": 0.8142070243757479,
-      "True Progression": 0.12367330742021349,
-      "Pseudoprogression": 0.06211966820403858
+      "Response / Stable": 0.4462589118806334,
+      "True Progression": 0.4545358298510143,
+      "Pseudoprogression": 0.09920525826835226
     },
-    "pseudoprogression_risk_percent": 6.211966820403858
+    "pseudoprogression_risk_percent": 9.920525826835226
   },
   "rano2_evaluation": {
     "rano_category": "PD",

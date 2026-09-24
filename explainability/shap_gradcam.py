@@ -16,7 +16,7 @@ import torch.nn as nn
 try:
     import shap
     HAS_SHAP = True
-except ImportError:
+except Exception:
     HAS_SHAP = False
 
 from utils.logger import get_logger

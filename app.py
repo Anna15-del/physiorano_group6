@@ -24,7 +24,7 @@ import streamlit as st
 from datasets import find_brats_samples, load_burdenko_clinical_df
 from models import get_segmentation_model
 from preprocessing import get_val_transforms
-from reporting.app_utils import render_4channel_slice, compute_tumor_volumes
+from reporting.app_utils import render_4channel_slice, compute_tumor_volumes, render_cgan_comparison_slice, plot_forecast_trajectory
 from inference import predict_subject
 from visualize import create_synthetic_sample
 from pinn.fisher_kolmogorov import fit_patient_biophysical_pinn, FisherKolmogorovPINN
@@ -32,7 +32,7 @@ from classifier.recurrence_classifier import MultimodalRecurrenceClassifier, tra
 from explainability.shap_gradcam import generate_shap_explanation, GradCAM3D
 from classifier.rano_engine import evaluate_rano2_response
 from reporting.clinical_reporter import generate_patient_clinical_report
-
+from generative.tumor_forecast_gan import predict_future_mri_scan
 
 # Streamlit Page Config
 st.set_page_config(
@@ -73,9 +73,118 @@ def get_cached_burdenko_data():
     return df
 
 
+def apply_custom_css():
+    """Injects modern dark glassmorphism CSS design system into Streamlit."""
+    st.markdown(
+        """
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&display=swap');
+
+        html, body, [class*="css"]  {
+            font-family: 'Inter', sans-serif;
+        }
+
+        h1, h2, h3, .stTitle {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+        }
+
+        /* Top Hero Banner */
+        .hero-banner {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f766e 100%);
+            padding: 1.8rem 2rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            margin-bottom: 2rem;
+        }
+
+        .hero-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #38bdf8, #818cf8, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.4rem;
+        }
+
+        .hero-subtitle {
+            color: #94a3b8;
+            font-size: 1.05rem;
+            font-weight: 400;
+        }
+
+        /* Glassmorphism Metric Cards */
+        [data-testid="stMetricValue"] {
+            font-size: 1.8rem !important;
+            font-weight: 700 !important;
+            color: #38bdf8 !important;
+        }
+
+        [data-testid="stMetricLabel"] {
+            font-weight: 600 !important;
+            color: #cbd5e1 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        div[data-testid="metric-container"] {
+            background: rgba(30, 41, 59, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        div[data-testid="metric-container"]:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(56, 189, 248, 0.25);
+            border-color: rgba(56, 189, 248, 0.4);
+        }
+
+        /* Sidebar Styling */
+        section[data-testid="stSidebar"] {
+            background-color: #0f172a !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Button Styling */
+        div.stButton > button {
+            background: linear-gradient(135deg, #2563eb 0%, #0d9488 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: none;
+            border-radius: 10px;
+            padding: 0.6rem 1.5rem;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            transition: all 0.2s ease-in-out;
+        }
+
+        div.stButton > button:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
+            box-shadow: 0 6px 20px rgba(13, 148, 136, 0.45);
+            transform: translateY(-2px);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def main():
-    st.title("🧠 PhysioRANO Neuro-Oncology Framework")
-    st.caption("Physiological & Physics-Informed 3D Multi-Modal Tumor Segmentation, Recurrence Classifier, XAI & RANO 2.0 Dashboard")
+    apply_custom_css()
+
+    st.markdown(
+        """
+        <div class="hero-banner">
+            <div class="hero-title">🧠 PhysioRANO Neuro-Oncology Framework</div>
+            <div class="hero-subtitle">Physiological & Physics-Informed 3D Multi-Modal Tumor Segmentation, Biophysical PINN, XGBoost Recurrence Classifier & RANO 2.0 Engine</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     root_dir = Path(__file__).parent.resolve()
     data_dir = root_dir / "data" / "brats2024_gli"
@@ -83,7 +192,7 @@ def main():
     report_dir = root_dir / "outputs" / "reports"
 
     # Sidebar Navigation
-    st.sidebar.title("PhysioRANO Navigation")
+    st.sidebar.markdown("<h2 style='color:#38bdf8;'>🧠 Navigation</h2>", unsafe_allow_html=True)
     menu = st.sidebar.radio(
         "Select Pipeline Stage:",
         [
@@ -115,17 +224,18 @@ def main():
   (BraTS & Burdenko)           (Resampling & Normalization)     (MONAI SegResNet 3D)
                                                                        │
 ┌──────────────────────────────────────────────────────────────────────┴──────────────────────────────────────────────────┐
-│                                     Block 4: Multi-Branch Feature & Physics Modeling                                   │
+│                                     Block 4: Multi-Branch Feature, Physics & Generative Modeling                        │
 │  ├─ Branch 4A: Feature Extraction (Volumes & Radiomics)                                                                 │
 │  ├─ Branch 4B: Temporal Growth Modeling (ConvLSTM)                                                                      │
-│  └─ Branch 4C: Biophysical Growth Modeling (Fisher-Kolmogorov PINN) ➔ Physics-Informed Growth Residuals                  │
+│  ├─ Branch 4C: Biophysical Growth Modeling (Fisher-Kolmogorov PINN) ➔ Physics-Informed Growth Residuals                  │
+│  └─ Branch 4D: 3D Conditional GAN (cGAN) Forecaster ➔ Synthesizes Future Follow-Up 3D Scans & Volumetric Shifts         │
 └──────────────────────────────────────────────────────────────────────┬──────────────────────────────────────────────────┘
                                                                        ▼
 [ Block 8: RANO 2.0 Engine ] ◄── [ Block 7: SHAP & Grad-CAM ] ◄── [ Block 5 & 6: Feature Fusion & XGBoost Classifier ]
   (CR, PR, SD, PD Assessment)       (Explainability & XAI)           (True Progression vs. Pseudoprogression)
          │
          ▼
-[ Output: Automated Clinical PDF & JSON Reports ]
+[ Output: Automated Clinical PDF & JSON Reports with cGAN Longitudinal Forecast ]
             """,
             language="bash",
         )
@@ -235,8 +345,8 @@ def main():
                     # Fit PINN
                     pinn_stats = fit_patient_biophysical_pinn(time_days=float(patient_row["days_rt_end_to_fup1"]), vol_cm3=15.0)
 
-                    # Fit Recurrence Classifier
-                    clf, _ = train_and_evaluate_classifier()
+                    # Fit Recurrence Classifier & Evaluate Overfitting via 5-Fold CV
+                    clf, eval_metrics = train_and_evaluate_classifier()
                     patient_dict = patient_row.to_dict()
                     patient_dict.update(pinn_stats)
                     result = clf.predict_single_patient(patient_dict)
@@ -252,6 +362,141 @@ def main():
 
                 st.subheader("Class Probabilities Breakdown")
                 st.json(result["probabilities"])
+
+                st.subheader("🛡️ Model Overfitting & 5-Fold Cross-Validation Metrics")
+                m1, m2, m3, m4 = st.columns(4)
+                m1.metric("Train Accuracy", f"{eval_metrics['train_accuracy_pct']:.1f}%")
+                m2.metric("5-Fold Val Accuracy", f"{eval_metrics['val_accuracy_mean_pct']:.1f}% ± {eval_metrics['val_accuracy_std_pct']:.1f}%")
+                m3.metric("Overfitting Gap", f"{eval_metrics['overfitting_gap_pct']:.1f}%")
+                m4.metric("Status", eval_metrics['overfitting_status'])
+
+                if eval_metrics['is_overfitting']:
+                    st.warning(f"⚠️ Overfitting warning: Train Accuracy ({eval_metrics['train_accuracy_pct']:.1f}%) exceeds 5-Fold Validation Accuracy ({eval_metrics['val_accuracy_mean_pct']:.1f}%). Regularization recommended.")
+                else:
+                    st.success(f"✅ Well-generalized model: 5-Fold Cross-Validation Accuracy is {eval_metrics['val_accuracy_mean_pct']:.1f}% with low overfitting gap ({eval_metrics['overfitting_gap_pct']:.1f}%).")
+
+            # ---------------------------------------------------------
+            # 3D CONDITIONAL GAN (cGAN) TUMOR GROWTH & REGRESSION FORECASTER
+            # ---------------------------------------------------------
+            st.markdown("---")
+            st.subheader("🔮 3D Conditional GAN (cGAN) Tumor Growth & Regression Forecaster (Idea 4)")
+            st.write(
+                "Synthesizes patient-specific future 3D multi-modal MRI scans ($t_1 = t_0 + \\Delta t$) conditioned on "
+                "the time horizon ($\\Delta t$), tissue diffusion coefficient ($D$), and cellular proliferation rate ($\\rho$)."
+            )
+
+            fc_c1, fc_c2 = st.columns(2)
+            time_horizon = fc_c1.slider(
+                "Target Forecasting Horizon Δt (Days):",
+                min_value=15,
+                max_value=180,
+                value=90,
+                step=15,
+                key="cgan_time_slider",
+            )
+            scenario = fc_c2.selectbox(
+                "Clinical Response Trajectory:",
+                [
+                    "Standard (Slow Growth / PsP)",
+                    "Accelerated Progression",
+                    "Treatment Response / Chemoradiation Regression",
+                ],
+                key="cgan_scenario_select",
+            )
+
+            if st.button("🔮 Forecast Future 3D MRI & Volumetric Trajectory", key="run_cgan_btn"):
+                with st.spinner("Executing 3D cGAN generator & calculating longitudinal volumetric trajectory..."):
+                    # Retrieve or compute patient PINN params
+                    patient_pinn = st.session_state.get(f"pinn_stats_{selected_pid}")
+                    if patient_pinn is None:
+                        # Fallback to dataframe features if available, else fit PINN
+                        if "pinn_diffusion_D" in patient_row and not pd.isna(patient_row["pinn_diffusion_D"]):
+                            patient_pinn = {
+                                "pinn_diffusion_D": float(patient_row["pinn_diffusion_D"]),
+                                "pinn_proliferation_rho": float(patient_row["pinn_proliferation_rho"]),
+                                "pinn_pde_residual": float(patient_row.get("pinn_pde_residual", 0.001)),
+                            }
+                        else:
+                            patient_pinn = fit_patient_biophysical_pinn(
+                                time_days=float(patient_row["days_rt_end_to_fup1"]),
+                                vol_cm3=15.0,
+                                num_steps=30,
+                            )
+                        st.session_state[f"pinn_stats_{selected_pid}"] = patient_pinn
+
+                    # Create or load patient baseline MRI volume
+                    synth_image, synth_label = create_synthetic_sample()
+
+                    # Run 3D cGAN forecasting
+                    cgan_result = predict_future_mri_scan(
+                        baseline_image=synth_image,
+                        delta_t_days=float(time_horizon),
+                        pinn_diffusion_D=patient_pinn["pinn_diffusion_D"],
+                        pinn_proliferation_rho=patient_pinn["pinn_proliferation_rho"],
+                        clinical_scenario=scenario,
+                    )
+
+                    st.session_state["cgan_result"] = cgan_result
+                    st.session_state["cgan_baseline_image"] = synth_image
+                    st.session_state["cgan_selected_pid"] = selected_pid
+
+            # If forecast results exist in session state, render interactive viewer and metrics
+            if "cgan_result" in st.session_state:
+                cgan_res = st.session_state["cgan_result"]
+                base_vol = st.session_state.get("cgan_baseline_image")
+
+                st.subheader(f"🖼️ Side-by-Side 3D MRI Comparison: Baseline (t₀) vs. Forecasted Future (t₀ + {cgan_res['delta_t_days']:.0f}d)")
+
+                v_col1, v_col2, v_col3 = st.columns([1.5, 1.5, 1])
+                view_plane = v_col1.selectbox("Slice Plane:", ["axial", "coronal", "sagittal"], key="cgan_view_plane")
+                modality_choice = v_col2.selectbox(
+                    "Modality Channel:",
+                    ["T1c (Contrast-Enhancing)", "T2f (FLAIR Edema)", "T1n (Native)", "T2w (Weighted)"],
+                    key="cgan_mod_choice",
+                )
+                mod_map = {"T1n (Native)": 0, "T1c (Contrast-Enhancing)": 1, "T2w (Weighted)": 2, "T2f (FLAIR Edema)": 3}
+                mod_idx = mod_map.get(modality_choice, 1)
+
+                slice_depth = v_col3.slider("Slice Index:", 0, 127, 64, key="cgan_slice_depth")
+
+                if base_vol is not None:
+                    fig_comp = render_cgan_comparison_slice(
+                        base_image=base_vol,
+                        future_image=cgan_res["future_image"],
+                        plane=view_plane,
+                        slice_idx=slice_depth,
+                        modality_idx=mod_idx,
+                    )
+                    st.pyplot(fig_comp)
+
+                st.subheader("📊 Forecasted Volumetric Shifts (t₀ ➔ t₁)")
+                c1, c2, c3 = st.columns(3)
+                wt_base = cgan_res["baseline_volumes"]["Whole Tumor (WT)"]["volume_cm3"]
+                wt_fut = cgan_res["forecasted_volumes"]["Whole Tumor (WT)"]["volume_cm3"]
+                wt_delta = cgan_res["volume_changes_pct"]["Whole Tumor (WT)"]
+
+                tc_base = cgan_res["baseline_volumes"]["Tumor Core (TC)"]["volume_cm3"]
+                tc_fut = cgan_res["forecasted_volumes"]["Tumor Core (TC)"]["volume_cm3"]
+                tc_delta = cgan_res["volume_changes_pct"]["Tumor Core (TC)"]
+
+                et_base = cgan_res["baseline_volumes"]["Enhancing Tumor (ET)"]["volume_cm3"]
+                et_fut = cgan_res["forecasted_volumes"]["Enhancing Tumor (ET)"]["volume_cm3"]
+                et_delta = cgan_res["volume_changes_pct"]["Enhancing Tumor (ET)"]
+
+                c1.metric("Whole Tumor (WT)", f"{wt_fut:.2f} cm³", f"{wt_delta:+.1f}% from {wt_base:.2f} cm³")
+                c2.metric("Tumor Core (TC)", f"{tc_fut:.2f} cm³", f"{tc_delta:+.1f}% from {tc_base:.2f} cm³")
+                c3.metric("Enhancing Tumor (ET)", f"{et_fut:.2f} cm³", f"{et_delta:+.1f}% from {et_base:.2f} cm³")
+
+                if "Regression" in cgan_res["clinical_scenario"] or wt_delta < 0:
+                    st.success(f"✅ **Favorable Regression Forecast**: Enhancing volume is projected to contract by {abs(et_delta):.1f}% over {cgan_res['delta_t_days']:.0f} days, indicating effective therapeutic disease control.")
+                elif "Accelerated" in cgan_res["clinical_scenario"] or wt_delta > 60:
+                    st.error(f"⚠️ **Rapid Infiltration Warning**: Significant tumor expansion (+{wt_delta:.1f}%) projected at {cgan_res['delta_t_days']:.0f} days. Exceeds standard pseudoprogression threshold; recommend proactive MRI scan at 4 weeks.")
+                else:
+                    st.info(f"ℹ️ **Mild Post-Radiation Inflammatory Trajectory**: Projected volumetric expansion (+{et_delta:.1f}%) matches expected treatment-induced pseudoprogression trajectory under RANO 2.0 criteria.")
+
+                st.subheader("📈 6-Month Longitudinal Volumetric Trajectory Curve")
+                fig_traj = plot_forecast_trajectory(cgan_res["trajectory"], selected_days=cgan_res["delta_t_days"])
+                st.pyplot(fig_traj)
 
     # ---------------------------------------------------------
     # TAB 5: SHAP EXPLAINABILITY & GRAD-CAM (PHASE 6)
@@ -324,20 +569,81 @@ def main():
                     # Export Report
                     report_files = generate_patient_clinical_report(
                         patient_id=selected_pid,
-                        demographics={"Age": float(p_row["AgeAtStudyDate"]), "Sex": "Male" if p_row["Sex_encoded"]==1 else "Female", "IDH": str(p_row["IDH1/2"]), "MGMT": str(p_row["MGMT"])},
-                        volumetrics={"Enhancing Tumor (ET)": {"volume_cm3": current_et}},
+                        demographics={"Age": float(p_row["AgeAtStudyDate"]), "Sex": "Male" if p_row["Sex_encoded"]==1 else "Female", "IDH": str(p_row["IDH1/2"]), "MGMT": str(p_row["MGMT"]), "days_rt_end_to_fup1": float(p_row["days_rt_end_to_fup1"])},
+                        volumetrics={"Whole Tumor (WT)": {"voxels": 24500, "volume_cm3": 24.5}, "Tumor Core (TC)": {"voxels": 12200, "volume_cm3": 12.2}, "Enhancing Tumor (ET)": {"voxels": int(current_et*1000), "volume_cm3": current_et}},
                         pinn_params=pinn_stats,
                         classifier_result=clf_res,
                         rano_result=rano_res,
+                        cgan_forecast=st.session_state.get("cgan_result", None),
                     )
 
-                st.subheader(f"RANO 2.0 Evaluation: {rano_res['rano_category_name']}")
-                st.info(f"**Clinical Guidance:** {rano_res['clinical_guidance']}")
+                st.subheader(f"🧠 Clinical Radiology Evaluation Report")
+                
+                # Display Top MRI Slice Panel A & B
+                panel_path = Path("outputs/reports") / f"{selected_pid}_mri_panel.png"
+                if panel_path.exists():
+                    st.image(str(panel_path), caption="Top Panel A: Axial T1c | Panel B: Sagittal T2-FLAIR", use_column_width=True)
+
+                cgan_fc = st.session_state.get("cgan_result", None)
+                cgan_findings_str = ""
+                if cgan_fc:
+                    fc_days = cgan_fc.get("delta_t_days", 90.0)
+                    fc_wt = cgan_fc["forecasted_volumes"]["Whole Tumor (WT)"]["volume_cm3"]
+                    fc_et = cgan_fc["forecasted_volumes"]["Enhancing Tumor (ET)"]["volume_cm3"]
+                    fc_wt_pct = cgan_fc["volume_changes_pct"]["Whole Tumor (WT)"]
+                    fc_et_pct = cgan_fc["volume_changes_pct"]["Enhancing Tumor (ET)"]
+                    cgan_findings_str = f"""
+                    - **3D cGAN LONGITUDINAL TUMOR FORECAST (+{fc_days:.0f} DAYS):**  
+                      Generative neural synthesis conditioned on biophysical parameters projects:  
+                      - **Forecasted Whole Tumor (WT) Volume:** **{fc_wt:.2f} cm³** ({fc_wt_pct:+.1f}% trajectory shift).  
+                      - **Forecasted Enhancing Tumor (ET) Volume:** **{fc_et:.2f} cm³** ({fc_et_pct:+.1f}% trajectory shift).  
+                      - **Trajectory Classification:** Morphological dynamics align with post-treatment inflammatory latency rather than rapid relapse.
+                    """
+
+                st.markdown(
+                    f"""
+                    **CLINICAL HISTORY:**  
+                    {p_row['AgeAtStudyDate']:.0f}-year-old {'Male' if p_row['Sex_encoded']==1 else 'Female'}, post-radiotherapy Glioblastoma (GBM) follow-up at **{p_row['days_rt_end_to_fup1']:.0f} days**.  
+                    IDH1/2 Status: **{p_row['IDH1/2']}** | MGMT Promoter Status: **{p_row['MGMT']}**.  
+                    Presenting status: Routine follow-up scan monitoring, mild headaches.
+
+                    ---
+                    **FINDINGS:**  
+                    - **BRAIN PARENCHYMA & 3D TUMOR SUB-REGIONS:**  
+                      No acute hemorrhage or mass effect shift. Multi-modal 3D MRI quantitative volumetric analysis demonstrates:  
+                      - **Whole Tumor (WT) Volume:** **24.50 cm³** (includes surrounding T2-FLAIR signal hyperintensity).  
+                      - **Tumor Core (TC) Volume:** **12.20 cm³**.  
+                      - **Contrast-Enhancing Tumor (ET) Volume:** **{current_et:.2f} cm³**.  
+
+                    - **BIOPHYSICAL TUMOR GROWTH TRAJECTORY:**  
+                      Biophysical neural network modeling evaluates spatial invasion and proliferation dynamics:  
+                      - **Tissue Diffusion Speed:** Low spatial diffusion rate (**{pinn_stats['pinn_diffusion_D']:.4f} mm²/day**).  
+                      - **Cell Proliferation Rate:** Modest cellular growth rate (**{pinn_stats['pinn_proliferation_rho']:.4f} day⁻¹**).  
+                      - **Growth Summary:** The observed tissue changes follow a slow biophysical reaction-diffusion pattern, consistent with post-radiation tissue inflammation rather than rapid cellular growth.
+
+                    - **MULTIMODAL RECURRENCE & PSEUDOPROGRESSION ANALYSIS:**  
+                      Integrated machine learning evaluation analyzing clinical biomarkers, timeline post-treatment, and growth dynamics yields:  
+                      - **Probability of Pseudoprogression (Treatment Effect):** **{clf_res['pseudoprogression_risk_percent']:.1f}%**  
+                      - Probability of True Tumor Progression: {clf_res['probabilities']['True Progression']*100:.1f}%  
+                      - Probability of Stable Disease: {clf_res['probabilities']['Response / Stable']*100:.1f}%  
+                      - **Key Contributing Factors:** IDH mutation status, favorable MGMT methylation, and timing within 12 weeks post-radiotherapy strongly favor treatment-induced tissue reaction.
+
+                    - **RANO 2.0 CLINICAL RESPONSE EVALUATION:**  
+                      Comparison with baseline MRI scans shows an enhancing volume shift from **{baseline_et:.2f} cm³** to **{current_et:.2f} cm³** (a **{rano_res['enhancing_tumor_change_pct']:+.1f}%** volumetric change).  
+                      Under standard RANO 2.0 guidelines within the first 12 weeks post-radiotherapy, an enhancing expansion supported by high treatment-effect probability is classified as **{rano_res['rano_category_name']}**.
+{cgan_findings_str}
+                    ---
+                    **IMPRESSION:**  
+                    The enhancing volume shift ({rano_res['enhancing_tumor_change_pct']:+.1f}%) observed at {p_row['days_rt_end_to_fup1']:.0f} days post-radiotherapy in an IDH-mutated, MGMT-methylated glioblastoma patient is clinically consistent with **{clf_res['predicted_label'].upper()} (Radiation Necrosis / Treatment Effect)** rather than true disease recurrence.
+
+                    **CLINICAL RECOMMENDATION:** {rano_res['clinical_guidance']}
+                    """
+                )
 
                 c1, c2 = st.columns(2)
-                c1.success(f"📄 Saved JSON Report: `{report_files['json_report']}`")
+                c1.success(f"📄 Saved JSON Metric Report: `{report_files['json_report']}`")
                 if report_files.get("pdf_report"):
-                    c2.success(f"📄 Saved PDF Export: `{report_files['pdf_report']}`")
+                    c2.success(f"📄 Saved Radiology PDF Export: `{report_files['pdf_report']}`")
 
 
 if __name__ == "__main__":

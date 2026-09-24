@@ -43,3 +43,9 @@ Thumbs.db
 
 # Streamlit secrets
 .streamlit/secrets.toml
+
+# Raw bulk dataset downloads
+data/brats2024_gli/BraTS-GLI/
+
+# Execution run logs
+outputs/runs/

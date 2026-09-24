@@ -1,0 +1,47 @@
+{
+  "patient_id": "Burdenko-GBM-002",
+  "demographics": {
+    "Age": 72.0,
+    "Sex": "Male",
+    "IDH": "positive",
+    "MGMT": "positive",
+    "days_rt_end_to_fup1": -77.0
+  },
+  "volumetrics": {
+    "Whole Tumor (WT)": {
+      "voxels": 24500,
+      "volume_cm3": 24.5
+    },
+    "Tumor Core (TC)": {
+      "voxels": 12200,
+      "volume_cm3": 12.2
+    },
+    "Enhancing Tumor (ET)": {
+      "voxels": 18500,
+      "volume_cm3": 18.5
+    }
+  },
+  "pinn_biophysical_modeling": {
+    "pinn_diffusion_D": 0.9696384072303772,
+    "pinn_proliferation_rho": 0.7825178503990173,
+    "pinn_pde_residual": 0.05352092161774635
+  },
+  "recurrence_classification": {
+    "predicted_class": 0,
+    "predicted_label": "Response / Stable",
+    "probabilities": {
+      "Response / Stable": 0.7495534901034464,
+      "True Progression": 0.17257259644733997,
+      "Pseudoprogression": 0.07787391344921359
+    },
+    "pseudoprogression_risk_percent": 7.7873913449213585
+  },
+  "rano2_evaluation": {
+    "rano_category": "PD",
+    "rano_category_name": "Progressive Disease (PD)",
+    "enhancing_tumor_change_pct": 54.166666666666664,
+    "whole_tumor_change_pct": 26.666666666666668,
+    "pseudoprogression_flag": false,
+    "clinical_guidance": "Significant volumetric expansion (>= 25%) or new lesion indicative of true tumor progression."
+  }
+}

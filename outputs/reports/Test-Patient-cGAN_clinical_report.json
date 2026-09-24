@@ -1,0 +1,93 @@
+{
+  "patient_id": "Test-Patient-cGAN",
+  "demographics": {
+    "Age": 55,
+    "Sex": "Male",
+    "IDH": "Mutated",
+    "MGMT": "Methylated",
+    "days_rt_end_to_fup1": 60.0
+  },
+  "descriptive_findings": {
+    "whole_tumor_volume_cm3": 24.5,
+    "tumor_core_volume_cm3": 12.2,
+    "enhancing_tumor_volume_cm3": 18.5,
+    "tissue_diffusion_rate_mm2_per_day": 0.12,
+    "cell_proliferation_rate_per_day": 0.04,
+    "pseudoprogression_probability_pct": 78.4,
+    "volumetric_change_pct": 54.17,
+    "rano2_category": "Pseudoprogression (PsP)",
+    "cgan_forecast": {
+      "delta_t_days": 90.0,
+      "clinical_scenario": "Standard (Slow Growth / PsP)",
+      "forecasted_volumes": {
+        "Whole Tumor (WT)": {
+          "volume_cm3": 384.17
+        },
+        "Tumor Core (TC)": {
+          "volume_cm3": 358.66
+        },
+        "Enhancing Tumor (ET)": {
+          "volume_cm3": 211.02
+        }
+      },
+      "volume_changes_pct": {
+        "Whole Tumor (WT)": 86.7,
+        "Tumor Core (TC)": 86.7,
+        "Enhancing Tumor (ET)": 86.7
+      },
+      "trajectory": [
+        {
+          "days": 0,
+          "wt_vol_cm3": 205.77,
+          "tc_vol_cm3": 192.1,
+          "et_vol_cm3": 113.03
+        },
+        {
+          "days": 30,
+          "wt_vol_cm3": 265.23,
+          "tc_vol_cm3": 247.62,
+          "et_vol_cm3": 145.69
+        },
+        {
+          "days": 60,
+          "wt_vol_cm3": 324.7,
+          "tc_vol_cm3": 303.14,
+          "et_vol_cm3": 178.36
+        },
+        {
+          "days": 90,
+          "wt_vol_cm3": 384.17,
+          "tc_vol_cm3": 358.66,
+          "et_vol_cm3": 211.02
+        },
+        {
+          "days": 120,
+          "wt_vol_cm3": 443.63,
+          "tc_vol_cm3": 414.18,
+          "et_vol_cm3": 243.69
+        },
+        {
+          "days": 180,
+          "wt_vol_cm3": 562.57,
+          "tc_vol_cm3": 525.21,
+          "et_vol_cm3": 309.02
+        }
+      ]
+    }
+  },
+  "recurrence_classification": {
+    "predicted_label": "Pseudoprogression",
+    "pseudoprogression_risk_percent": 78.4,
+    "probabilities": {
+      "Pseudoprogression": 0.784,
+      "True Progression": 0.142,
+      "Response / Stable": 0.074
+    }
+  },
+  "rano2_evaluation": {
+    "baseline_et_vol": 12.0,
+    "enhancing_tumor_change_pct": 54.17,
+    "rano_category_name": "Pseudoprogression (PsP)",
+    "clinical_guidance": "Re-evaluate scan in 4-8 weeks."
+  }
+}
